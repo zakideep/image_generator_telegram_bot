@@ -1,16 +1,18 @@
 import os
 import json
 import requests
-from telegram import Update
+from telegram import Bot, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
 from keep_alive import keep_alive
+
 # load .env
 load_dotenv("token.env")
 
 # get tokens
 bot_token = os.getenv("BOT_TOKEN")
 hf_token = os.getenv("HF_TOKEN")
+
 # banned words to generate
 with open("banned_words.json", "r") as f:
     banned = json.load(f)["banned_words"]
@@ -58,6 +60,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"🚫 The word '{bad_word}' is not allowed to generate")
 
 def main():
+    # DELETE any previous webhook to avoid Conflict error
+    bot = Bot(bot_token)
+    bot.delete_webhook()  # <-- key line
+
     app = Application.builder().token(bot_token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
@@ -66,4 +72,6 @@ def main():
 if __name__ == "__main__":
     keep_alive()
     main()
+
+
 
